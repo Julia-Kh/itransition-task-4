@@ -1,12 +1,35 @@
-import { useState } from "react";
+import { useState, useEffect } from 'react';
 import Table from "./Table";
 import Button from "./Buttons";
-import { users as init } from "../data.js";
 
-export default function Main() {
+export default function Main({ supabase }) {
     const [content, setContent] = useState("click");
-    const [users, setUsers] = useState(init);
+    const [users, setUsers] = useState([]);
     const [isCheckedAll, setIsCheckedAll] = useState(false);
+
+    useEffect(() => {
+        getUsers();
+    }, []);
+
+    async function getUsers() {
+        let { data, error } = await supabase.rpc('get_users');
+        if (error) console.error(error);
+        else {
+            const user_data = data.map((user) => {
+                const { id, last_sign_in_at, banned_until, email: eMail, raw_user_meta_data: { name } } = user;
+
+                const lastLogin = new Date(last_sign_in_at).toLocaleString()
+                const status = banned_until === null ? 'Active' : 'Blocked';
+                const isChecked = false;
+
+                return { id, lastLogin, eMail, status, name, isChecked }
+            })
+
+            setUsers(user_data);
+        }
+
+        console.log(data);
+    }
 
     function handleClick(type) {
         setContent(type);

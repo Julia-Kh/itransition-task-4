@@ -24,7 +24,7 @@ export default function App() {
                 <div>Logged in!</div>
                 <button onClick={() => supabase.auth.signOut()}>Sign out</button>
             </div>
-                <Main key={session.user.id} session={session} /></>}
+                <Main key={session.user.id} session={session} supabase={supabase} /></>}
         </div>
     );
 }

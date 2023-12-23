@@ -47,8 +47,6 @@ export default function Table({
                     </th>
                     <th>
                         Name
-                        <br />
-                        Position
                     </th>
                     <th>e-mail</th>
                     <th>Last login</th>

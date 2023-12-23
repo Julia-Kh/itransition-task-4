@@ -40,6 +40,27 @@ export default function Main({ supabase }) {
             }
         }
         console.log("button clicked", type, checkedUsers);
+        if (type === 'block') {
+            supabase.rpc('block_users', { user_ids: checkedUsers }).then((res) => {
+                let { data, error } = res;
+                if (error) console.error(error);
+                else console.log(data);
+            });
+        } else if (type === 'unblock') {
+            supabase.rpc('unblock_users', { user_ids: checkedUsers }).then((res) => {
+                let { data, error } = res;
+                if (error) console.error(error);
+                else console.log(data);
+            });
+        } else if (type === 'delete') {
+            supabase.rpc('delete_users', { user_ids: checkedUsers }).then((res) => {
+                let { data, error } = res;
+                if (error) console.error(error);
+                else console.log(data);
+            });
+        }
+
+
     }
 
     function handleOnChange(event) {

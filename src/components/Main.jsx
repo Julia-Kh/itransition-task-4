@@ -27,8 +27,6 @@ export default function Main({ supabase }) {
 
             setUsers(user_data);
         }
-
-        console.log(data);
     }
 
     function handleClick(type) {
@@ -44,27 +42,21 @@ export default function Main({ supabase }) {
             supabase.rpc('block_users', { user_ids: checkedUsers }).then((res) => {
                 let { data, error } = res;
                 if (error) console.error(error);
-                else console.log(data);
             });
         } else if (type === 'unblock') {
             supabase.rpc('unblock_users', { user_ids: checkedUsers }).then((res) => {
                 let { data, error } = res;
                 if (error) console.error(error);
-                else console.log(data);
             });
         } else if (type === 'delete') {
             supabase.rpc('delete_users', { user_ids: checkedUsers }).then((res) => {
                 let { data, error } = res;
                 if (error) console.error(error);
-                else console.log(data);
             });
         }
-
-
     }
 
     function handleOnChange(event) {
-        console.log("handle change", event.target.id);
         const newUsers = [...users];
         for (let newUser of newUsers) {
             if (event.target.id === newUser.id) {

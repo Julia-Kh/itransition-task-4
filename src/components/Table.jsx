@@ -1,67 +1,45 @@
-import { useState } from "react";
+import { DataGrid } from '@mui/x-data-grid';
 
-function TableRow({
-    name,
-    eMail,
-    lastLogin,
-    status,
-    isChecked,
-    id,
-    handleOnChange,
-}) {
-    return (
-        <tr>
-            <td>
-                <input
-                    id={id}
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={handleOnChange}
-                />
-            </td>
-            <td>{name}</td>
-            <td>{eMail}</td>
-            <td>{lastLogin}</td>
-            <td>{status}</td>
-        </tr>
-    );
-}
+const columns = [
+    {
+        headerName: 'Name',
+        field: 'name',
+        width: 150,
+    },
+    {
+        headerName: 'e-mail',
+        field: 'eMail',
+        width: 200,
+    },
+    {
+        headerName: 'Last login',
+        field: 'lastLogin',
+        width: 200,
+    },
+    {
+        headerName: 'Status',
+        field: 'status',
+        width: 100,
+    },
+];
 
-export default function Table({
-    users,
-    handleOnChange,
-    isCheckedAll,
-    handleOnChangeAll,
-}) {
+export default function AntdTable({ onSelectChange, data, rowSelectionModel }) {
     return (
-        <table>
-            <thead>
-                <tr>
-                    <th>
-                        <input
-                            id={"checkbox_all"}
-                            type="checkbox"
-                            checked={isCheckedAll}
-                            onChange={handleOnChangeAll}
-                        />
-                    </th>
-                    <th>
-                        Name
-                    </th>
-                    <th>e-mail</th>
-                    <th>Last login</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {users.map((user) => (
-                    <TableRow
-                        key={user.id}
-                        {...user}
-                        handleOnChange={handleOnChange}
-                    />
-                ))}
-            </tbody>
-        </table>
+        <div style={{ height: 400, width: '100%' }}>
+            <DataGrid
+                rows={data}
+                columns={columns}
+                initialState={{
+                    pagination: {
+                        paginationModel: {
+                            pageSize: 5,
+                        },
+                    },
+                }}
+                checkboxSelection
+                onRowSelectionModelChange={onSelectChange}
+                rowSelectionModel={rowSelectionModel}
+            />
+        </div>
     );
 }

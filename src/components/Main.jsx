@@ -1,104 +1,124 @@
 import { useState, useEffect } from 'react';
-import Table from "./Table";
-import Button from "./Buttons";
+import Table from './Table';
 
-export default function Main({ supabase }) {
-    const [content, setContent] = useState("click");
+import Stack from '@mui/material/Stack';
+import DeleteIcon from '@mui/icons-material/Delete';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import LoadingButton from '@mui/lab/LoadingButton';
+
+export default function Main({ supabase, session }) {
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState([]);
-    const [isCheckedAll, setIsCheckedAll] = useState(false);
 
     useEffect(() => {
         getUsers();
     }, []);
 
-    async function getUsers() {
-        let { data, error } = await supabase.rpc('get_users');
-        if (error) console.error(error);
-        else {
+    const block = () => {
+        setLoading(true);
+        // ajax request after empty completing
+        supabase.rpc('block_users', { user_ids: selectedRowKeys }).then((res) => {
+            let { data, error } = res;
+            if (error) console.error('block', error, data);
+            getUsers();
+            checkSignOut(selectedRowKeys);
+            setSelectedRowKeys([]);
+            setLoading(false);
+        });
+    };
+
+    const unblock = () => {
+        setLoading(true);
+        // ajax request after empty completing
+        supabase.rpc('unblock_users', { user_ids: selectedRowKeys }).then((res) => {
+            let { data, error } = res;
+            if (error) console.error('unblock', error, data);
+            getUsers();
+            setSelectedRowKeys([]);
+            setLoading(false);
+        });
+    };
+
+    const remove = () => {
+        setLoading(true);
+        // ajax request after empty completing
+        supabase.rpc('delete_users', { user_ids: selectedRowKeys }).then((res) => {
+            let { data, error } = res;
+            if (error) console.error('delete', error, data);
+            getUsers();
+            checkSignOut(selectedRowKeys);
+            setSelectedRowKeys([]);
+            setLoading(false);
+        });
+    };
+
+    const onSelectChange = (newSelectedRowKeys) => {
+        console.log('selectedRowKeys changed: ', newSelectedRowKeys);
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const hasSelected = selectedRowKeys.length > 0;
+
+    function getUsers() {
+        console.log('get users..');
+        supabase.rpc('get_users').then((res) => {
+            let { data, error } = res;
+
+            if (error) {
+                console.error('get_users', error, data);
+                return;
+            }
+
             const user_data = data.map((user) => {
-                const { id, last_sign_in_at, banned_until, email: eMail, raw_user_meta_data: { name } } = user;
+                const {
+                    id,
+                    id: key,
+                    last_sign_in_at,
+                    banned_until,
+                    email: eMail,
+                    raw_user_meta_data: { name },
+                } = user;
 
-                const lastLogin = new Date(last_sign_in_at).toLocaleString()
+                const lastLogin = new Date(last_sign_in_at).toLocaleString();
                 const status = banned_until === null ? 'Active' : 'Blocked';
-                const isChecked = false;
 
-                return { id, lastLogin, eMail, status, name, isChecked }
-            })
+                return { id, key, lastLogin, eMail, status, name };
+            });
 
             setUsers(user_data);
-        }
+        });
     }
 
-    function handleClick(type) {
-        setContent(type);
-        const checkedUsers = [];
-        for (let user of users) {
-            if (user.isChecked) {
-                checkedUsers.push(user.id);
-            }
-        }
-        console.log("button clicked", type, checkedUsers);
-        if (type === 'block') {
-            supabase.rpc('block_users', { user_ids: checkedUsers }).then((res) => {
-                let { data, error } = res;
-                if (error) console.error(error);
-            });
-        } else if (type === 'unblock') {
-            supabase.rpc('unblock_users', { user_ids: checkedUsers }).then((res) => {
-                let { data, error } = res;
-                if (error) console.error(error);
-            });
-        } else if (type === 'delete') {
-            supabase.rpc('delete_users', { user_ids: checkedUsers }).then((res) => {
-                let { data, error } = res;
-                if (error) console.error(error);
-            });
+    function checkSignOut(user_ids) {
+        if (user_ids.some((item) => item === session.user.id)) {
+            supabase.auth.signOut();
+            console.log('Sign Out..');
         }
     }
-
-    function handleOnChange(event) {
-        const newUsers = [...users];
-        for (let newUser of newUsers) {
-            if (event.target.id === newUser.id) {
-                newUser.isChecked = !newUser.isChecked;
-            }
-        }
-        setUsers(newUsers);
-    }
-
-    const handleOnChangeAll = () => {
-        // Галочка в углу таблиицы поменялась
-        setIsCheckedAll(!isCheckedAll);
-
-        if (isCheckedAll) {
-            for (let user of users) {
-                if (user.isChecked) {
-                    user.isChecked = !user.isChecked;
-                }
-            }
-        } else {
-            for (let user of users) {
-                if (!user.isChecked) {
-                    user.isChecked = !user.isChecked;
-                }
-            }
-        }
-        const newUsers = [...users];
-        setUsers(newUsers);
-    };
 
     return (
         <>
-            <Button onClick={() => handleClick("block")}>Block</Button>
-            <Button onClick={() => handleClick("unblock")}>Unblock</Button>
-            <Button onClick={() => handleClick("delete")}>Delete</Button>
-            <Table
-                users={users}
-                handleOnChange={handleOnChange}
-                isCheckedAll={isCheckedAll}
-                handleOnChangeAll={handleOnChangeAll}
-            />
-            <p>{content}</p>
+            <div
+                style={{
+                    marginBottom: 16,
+                }}
+            >
+                <Stack spacing={2} direction="row">
+                    <LoadingButton variant="contained" onClick={block} disabled={!hasSelected} loading={loading} startIcon={<LockIcon />}>
+                        Block
+                    </LoadingButton>
+                    <LoadingButton variant="contained" onClick={unblock} disabled={!hasSelected} loading={loading} startIcon={<LockOpenIcon />}>
+                        Unblock
+                    </LoadingButton>
+                    <LoadingButton variant="contained" color="error" onClick={remove} disabled={!hasSelected} loading={loading} startIcon={<DeleteIcon />} >
+                        Delete
+                    </LoadingButton>
+                </Stack>
+            </div>
+
+            <Table data={users} onSelectChange={onSelectChange} rowSelectionModel={selectedRowKeys} />
         </>
     );
 }
